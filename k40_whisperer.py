@@ -225,6 +225,8 @@ class Application(Frame):
         self.n_egv_passes = StringVar()
 
         self.inkscape_path = StringVar()
+        self.execute_before = StringVar()
+        self.execute_after = StringVar()
         self.t_timeout  = StringVar()
         self.n_timeouts  = StringVar()
         
@@ -858,6 +860,8 @@ class Application(Frame):
         
         header.append('(k40_whisperer_set designfile    \042%s\042 )' %( self.DESIGN_FILE   ))
         header.append('(k40_whisperer_set inkscape_path \042%s\042 )' %( self.inkscape_path.get() ))
+        header.append('(k40_whisperer_set execute_before \042%s\042 )' %( self.execute_before.get() ))
+        header.append('(k40_whisperer_set execute_after \042%s\042 )' %( self.execute_after.get() ))
 
 
         self.jog_step
@@ -2297,6 +2301,10 @@ class Application(Frame):
                            self.DESIGN_FILE=(line[line.find("designfile"):].split("\042")[1])
                     elif "inkscape_path"    in line:
                          self.inkscape_path.set(line[line.find("inkscape_path"):].split("\042")[1])
+                    elif "execute_before"    in line:
+                         self.execute_before.set(line[line.find("execute_before"):].split("\042")[1])
+                    elif "execute_after"    in line:
+                         self.execute_after.set(line[line.find("execute_after"):].split("\042")[1])
             except:
                 #Ignoring exeptions during reading data from line 
                 pass
@@ -2601,10 +2609,26 @@ class Application(Frame):
         self.statusbar.configure(state="normal")
         self.master.update()
 
-    def Vector_Cut(self, output_filename=None):
+    def begin_op(self):
         self.stop[0]=False
         self.set_gui("disabled")
         self.statusbar.configure( bg = 'green' )
+        if self.execute_before.get()!="":
+            dm=self.statusMessage.get()
+            self.statusMessage.set("Executing before task: %s" % (self.execute_before.get()))
+            os.system(self.execute_before.get())
+            self.statusMessage.set(dm)
+
+    def finish_op(self):
+        if self.execute_after.get()!="":
+            dm=self.statusMessage.get()
+            self.statusMessage.set("Executing after task: %s" % (self.execute_after.get()))
+            os.system(self.execute_after.get())
+            self.statusMessage.set(dm)
+        self.set_gui("normal")
+
+    def Vector_Cut(self, output_filename=None):
+        self.begin_op()
         self.statusMessage.set("Vector Cut: Processing Vector Data.")
         self.master.update()
         if self.VcutData.ecoords!=[]:
@@ -2612,12 +2636,10 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data to cut")
-        self.set_gui("normal")
+        self.finish_op()
         
     def Vector_Eng(self, output_filename=None):
-        self.stop[0]=False
-        self.set_gui("disabled")
-        self.statusbar.configure( bg = 'green' )
+        self.begin_op()
         self.statusMessage.set("Vector Engrave: Processing Vector Data.")
         self.master.update()
         if self.VengData.ecoords!=[]:
@@ -2625,12 +2647,10 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data to engrave")
-        self.set_gui("normal")
+        self.finish_op()
 
     def Raster_Eng(self, output_filename=None):
-        self.stop[0]=False
-        self.set_gui("disabled")
-        self.statusbar.configure( bg = 'green' )
+        self.begin_op()
         self.statusMessage.set("Raster Engraving: Processing Image Data.")
         self.master.update()
         try:
@@ -2656,12 +2676,10 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.set_gui("normal")
+        self.finish_op()
 
     def Raster_Vector_Eng(self, output_filename=None):
-        self.stop[0]=False
-        self.set_gui("disabled")
-        self.statusbar.configure( bg = 'green' )
+        self.begin_op()
         self.statusMessage.set("Raster Engraving: Processing Image and Vector Data.")
         self.master.update()
         try:
@@ -2678,13 +2696,11 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.set_gui("normal")
+        self.finish_op()
 
 
     def Vector_Eng_Cut(self, output_filename=None):
-        self.stop[0]=False
-        self.set_gui("disabled")
-        self.statusbar.configure( bg = 'green' )
+        self.begin_op()
         self.statusMessage.set("Vector Cut: Processing Vector Data.")
         self.master.update()
         if self.VcutData.ecoords!=[] or self.VengData.ecoords!=[]:
@@ -2692,13 +2708,11 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data.")
-        self.set_gui("normal")
+        self.finish_op()
 
         
     def Raster_Vector_Cut(self, output_filename=None):
-        self.stop[0]=False
-        self.set_gui("disabled")
-        self.statusbar.configure( bg = 'green' )
+        self.begin_op()
         self.statusMessage.set("Raster Engraving: Processing Image and Vector Data.")
         self.master.update()
         try:
@@ -2715,13 +2729,11 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.set_gui("normal")
+        self.finish_op()
         
         
     def Gcode_Cut(self, output_filename=None):
-        self.stop[0]=False
-        self.set_gui("disabled")
-        self.statusbar.configure( bg = 'green' )
+        self.begin_op()
         self.statusMessage.set("G Code Cutting.")
         self.master.update()
         if self.GcodeData.ecoords!=[]:
@@ -2729,7 +2741,7 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No g-code data to cut")
-        self.set_gui("normal")
+        self.finish_op()
 
 
     ################################################################################
@@ -4274,7 +4286,21 @@ class Application(Frame):
         self.Entry_Laser_Y_Scale.configure(textvariable=self.LaserYscale)
         self.LaserYscale.trace_variable("w", self.Entry_Laser_Y_Scale_Callback)
         self.entry_set(self.Entry_Laser_Y_Scale,self.Entry_Laser_Y_Scale_Check(),2)
-                
+
+        D_Yloc=D_Yloc+D_dY
+        self.Label_Ex_Before = Label(gen_settings,text="Execute before cut")
+        self.Label_Ex_Before.place(x=xd_label_L, y=D_Yloc, width=w_label, height=21)
+        self.Entry_Ex_Before = Entry(gen_settings,width="15")
+        self.Entry_Ex_Before.place(x=xd_entry_L, y=D_Yloc, width=font_entry_width, height=23)
+        self.Entry_Ex_Before.configure(textvariable=self.execute_before)
+
+        D_Yloc=D_Yloc+D_dY
+        self.Label_Ex_After = Label(gen_settings,text="Execute after cut")
+        self.Label_Ex_After.place(x=xd_label_L, y=D_Yloc, width=w_label, height=21)
+        self.Entry_Ex_After = Entry(gen_settings,width="15")
+        self.Entry_Ex_After.place(x=xd_entry_L, y=D_Yloc, width=font_entry_width, height=23)
+        self.Entry_Ex_After.configure(textvariable=self.execute_after)
+
         D_Yloc=D_Yloc+D_dY+10
         self.Label_SaveConfig = Label(gen_settings,text="Configuration File")
         self.Label_SaveConfig.place(x=xd_label_L, y=D_Yloc, width=113, height=21)
