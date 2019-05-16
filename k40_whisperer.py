@@ -860,8 +860,8 @@ class Application(Frame):
         
         header.append('(k40_whisperer_set designfile    \042%s\042 )' %( self.DESIGN_FILE   ))
         header.append('(k40_whisperer_set inkscape_path \042%s\042 )' %( self.inkscape_path.get() ))
-        header.append('(k40_whisperer_set execute_before \042%s\042 )' %( self.execute_before.get() ))
-        header.append('(k40_whisperer_set execute_after \042%s\042 )' %( self.execute_after.get() ))
+        header.append('(k40_whisperer_set execute_before #%s# )' %( self.execute_before.get() ))
+        header.append('(k40_whisperer_set execute_after #%s# )' %( self.execute_after.get() ))
 
 
         self.jog_step
@@ -2302,9 +2302,9 @@ class Application(Frame):
                     elif "inkscape_path"    in line:
                          self.inkscape_path.set(line[line.find("inkscape_path"):].split("\042")[1])
                     elif "execute_before"    in line:
-                         self.execute_before.set(line[line.find("execute_before"):].split("\042")[1])
+                         self.execute_before.set(line[line.find("execute_before"):].split("#")[1])
                     elif "execute_after"    in line:
-                         self.execute_after.set(line[line.find("execute_after"):].split("\042")[1])
+                         self.execute_after.set(line[line.find("execute_after"):].split("#")[1])
             except:
                 #Ignoring exeptions during reading data from line 
                 pass
@@ -2609,26 +2609,26 @@ class Application(Frame):
         self.statusbar.configure(state="normal")
         self.master.update()
 
-    def begin_op(self):
+    def begin_op(self, output_filename=None):
         self.stop[0]=False
         self.set_gui("disabled")
         self.statusbar.configure( bg = 'green' )
         if self.execute_before.get()!="":
             dm=self.statusMessage.get()
             self.statusMessage.set("Executing before task: %s" % (self.execute_before.get()))
-            os.system(self.execute_before.get())
+            os.system("%s %s" % (self.execute_before.get(), output_filename))
             self.statusMessage.set(dm)
 
-    def finish_op(self):
+    def finish_op(self, output_filename=None):
         if self.execute_after.get()!="":
             dm=self.statusMessage.get()
             self.statusMessage.set("Executing after task: %s" % (self.execute_after.get()))
-            os.system(self.execute_after.get())
+            os.system("%s %s" % (self.execute_after.get(), output_filename))
             self.statusMessage.set(dm)
         self.set_gui("normal")
 
     def Vector_Cut(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("Vector Cut: Processing Vector Data.")
         self.master.update()
         if self.VcutData.ecoords!=[]:
@@ -2636,10 +2636,10 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data to cut")
-        self.finish_op()
+        self.finish_op(output_filename)
         
     def Vector_Eng(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("Vector Engrave: Processing Vector Data.")
         self.master.update()
         if self.VengData.ecoords!=[]:
@@ -2647,10 +2647,10 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data to engrave")
-        self.finish_op()
+        self.finish_op(output_filename)
 
     def Raster_Eng(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("Raster Engraving: Processing Image Data.")
         self.master.update()
         try:
@@ -2676,10 +2676,10 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.finish_op()
+        self.finish_op(output_filename)
 
     def Raster_Vector_Eng(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("Raster Engraving: Processing Image and Vector Data.")
         self.master.update()
         try:
@@ -2696,11 +2696,11 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.finish_op()
+        self.finish_op(output_filename)
 
 
     def Vector_Eng_Cut(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("Vector Cut: Processing Vector Data.")
         self.master.update()
         if self.VcutData.ecoords!=[] or self.VengData.ecoords!=[]:
@@ -2708,11 +2708,11 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data.")
-        self.finish_op()
+        self.finish_op(output_filename)
 
         
     def Raster_Vector_Cut(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("Raster Engraving: Processing Image and Vector Data.")
         self.master.update()
         try:
@@ -2729,11 +2729,11 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.finish_op()
+        self.finish_op(output_filename)
         
         
     def Gcode_Cut(self, output_filename=None):
-        self.begin_op()
+        self.begin_op(output_filename)
         self.statusMessage.set("G Code Cutting.")
         self.master.update()
         if self.GcodeData.ecoords!=[]:
@@ -2741,7 +2741,7 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No g-code data to cut")
-        self.finish_op()
+        self.finish_op(output_filename)
 
 
     ################################################################################
