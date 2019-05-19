@@ -2609,26 +2609,26 @@ class Application(Frame):
         self.statusbar.configure(state="normal")
         self.master.update()
 
-    def begin_op(self, output_filename=None):
+    def begin_op(self):
         self.stop[0]=False
         self.set_gui("disabled")
         self.statusbar.configure( bg = 'green' )
         if self.execute_before.get()!="":
             dm=self.statusMessage.get()
             self.statusMessage.set("Executing before task: %s" % (self.execute_before.get()))
-            os.system("%s %s" % (self.execute_before.get(), output_filename))
+            os.system("%s %s" % (self.execute_before.get(), self.DESIGN_FILE))
             self.statusMessage.set(dm)
 
-    def finish_op(self, output_filename=None):
+    def finish_op(self):
         if self.execute_after.get()!="":
             dm=self.statusMessage.get()
             self.statusMessage.set("Executing after task: %s" % (self.execute_after.get()))
-            os.system("%s %s" % (self.execute_after.get(), output_filename))
+            os.system("%s %s" % (self.execute_after.get(), self.DESIGN_FILE))
             self.statusMessage.set(dm)
         self.set_gui("normal")
 
     def Vector_Cut(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("Vector Cut: Processing Vector Data.")
         self.master.update()
         if self.VcutData.ecoords!=[]:
@@ -2636,10 +2636,10 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data to cut")
-        self.finish_op(output_filename)
+        self.finish_op()
         
     def Vector_Eng(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("Vector Engrave: Processing Vector Data.")
         self.master.update()
         if self.VengData.ecoords!=[]:
@@ -2647,10 +2647,10 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data to engrave")
-        self.finish_op(output_filename)
+        self.finish_op()
 
     def Raster_Eng(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("Raster Engraving: Processing Image Data.")
         self.master.update()
         try:
@@ -2676,10 +2676,10 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.finish_op(output_filename)
+        self.finish_op()
 
     def Raster_Vector_Eng(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("Raster Engraving: Processing Image and Vector Data.")
         self.master.update()
         try:
@@ -2696,11 +2696,11 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.finish_op(output_filename)
+        self.finish_op()
 
 
     def Vector_Eng_Cut(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("Vector Cut: Processing Vector Data.")
         self.master.update()
         if self.VcutData.ecoords!=[] or self.VengData.ecoords!=[]:
@@ -2708,11 +2708,11 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No vector data.")
-        self.finish_op(output_filename)
+        self.finish_op()
 
         
     def Raster_Vector_Cut(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("Raster Engraving: Processing Image and Vector Data.")
         self.master.update()
         try:
@@ -2729,11 +2729,11 @@ class Application(Frame):
             self.statusbar.configure( bg = 'red' )
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
-        self.finish_op(output_filename)
+        self.finish_op()
         
         
     def Gcode_Cut(self, output_filename=None):
-        self.begin_op(output_filename)
+        self.begin_op()
         self.statusMessage.set("G Code Cutting.")
         self.master.update()
         if self.GcodeData.ecoords!=[]:
@@ -2741,7 +2741,7 @@ class Application(Frame):
         else:
             self.statusbar.configure( bg = 'yellow' )
             self.statusMessage.set("No g-code data to cut")
-        self.finish_op(output_filename)
+        self.finish_op()
 
 
     ################################################################################
