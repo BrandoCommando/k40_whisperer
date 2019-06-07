@@ -141,6 +141,13 @@ class Application(Frame):
                 self.serial.write("a%s\n" % (msg))
         except:
             pass
+    
+    def sendSerialChar(self,char)
+        try:
+            if self.serial.writeable():
+                self.serial.write(char)
+        except:
+            pass
 
     def createWidgets(self):
         self.initComplete = 0
@@ -2632,6 +2639,7 @@ class Application(Frame):
 
     def begin_op(self):
         self.stop[0]=False
+        self.sendSerialChar('p')
         self.set_gui("disabled")
         self.statusbar.configure( bg = 'green' )
         if self.execute_before.get()!="":
@@ -2646,6 +2654,7 @@ class Application(Frame):
             self.statusMessage.set("Executing after task: %s" % (self.execute_after.get()))
             os.system("%s %s" % (self.execute_after.get(), self.DESIGN_FILE))
             self.statusMessage.set(dm)
+        self.sendSerialChar('d')
         self.set_gui("normal")
 
     def Vector_Cut(self, output_filename=None):
@@ -3207,9 +3216,10 @@ class Application(Frame):
             message_box(msg1, msg2)
             debug_message(traceback.format_exc())
 
-    def send_egv_data(self,data,num_passes=1,output_filename=None):        
+    def send_egv_data(self,data,num_passes=1,output_filename=None):
         pre_process_CRC        = self.pre_pr_crc.get()
         if self.k40 != None:
+            self.begin_op()
             self.k40.timeout       = int(self.t_timeout.get())   
             self.k40.n_timeouts    = int(self.n_timeouts.get())
             if DEBUG:
@@ -3217,6 +3227,7 @@ class Application(Frame):
             self.k40.send_data(data,self.update_gui,self.stop,num_passes,pre_process_CRC, wait_for_laser=True)
             if DEBUG:
                 print(("Elapsed Time: %.2f" %(time()-time_start)))
+            self.finish_op()
         else:
             self.statusMessage.set("Laser is not initialized.")
             self.statusbar.configure( bg = 'yellow' )
