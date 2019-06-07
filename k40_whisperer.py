@@ -142,7 +142,7 @@ class Application(Frame):
         except:
             pass
     
-    def sendSerialChar(self,char)
+    def sendSerialChar(self,char):
         try:
             if self.serial.writeable():
                 self.serial.write(char)
