@@ -136,16 +136,15 @@ class Application(Frame):
             pass
 
     def sendSerial(self,msg):
-        try:
-            if self.serial.writeable():
-                self.serial.write("a%s\n" % (msg))
-        except:
-            pass
+        self.sendSerialChar("a%s\n" % (msg))
     
     def sendSerialChar(self,char):
         try:
             if self.serial.writeable():
                 self.serial.write(char)
+                print "Sent to serial: %s" % (char)
+            else:
+                print "Serial not writeable."
         except:
             pass
 
