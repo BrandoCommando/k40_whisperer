@@ -39,6 +39,7 @@ import cubicsuperpath
 import cspsubdiv
 import traceback
 import struct
+import serial
 
 DEBUG = False
 
@@ -106,6 +107,7 @@ class Application(Frame):
         self.master = master
         self.x = -1
         self.y = -1
+        self.openSerial()
         self.createWidgets()
 
     def resetPath(self):
@@ -122,7 +124,24 @@ class Application(Frame):
         #    self.move_head_window_temporary([0.0,0.0])
             
         self.pos_offset=[0.0,0.0]
-        
+
+    def openSerial(self):
+        try:
+            self.serial = serial.Serial()
+            self.serial.port='/dev/ttyUSB0'
+            self.serial.baudrate=9600
+            self.serial.open()
+
+        except:
+            pass
+
+    def sendSerial(self,msg):
+        try:
+            if self.serial.writeable():
+                self.serial.write("a%s\n" % (msg))
+        except:
+            pass
+
     def createWidgets(self):
         self.initComplete = 0
         self.stop=[]
@@ -364,8 +383,8 @@ class Application(Frame):
             self.units_scale = 25.4
         
         self.statusMessage = StringVar()
+        self.statusMessage.trace("w", self.Status_Message_Callback)
         self.statusMessage.set("Welcome to K40 Whisperer")
-        
         
         self.Reng_time.set("0")
         self.Veng_time.set("0")
@@ -1443,7 +1462,8 @@ class Application(Frame):
         
     #############################
 
-
+    def Status_Message_Callback(self, varName=None, index=None, mode=None):
+        self.sendSerial(self.statusMessage.get())
 
 
 
@@ -2589,6 +2609,7 @@ class Application(Frame):
         if message!=None:
             self.statusMessage.set(message)
             self.statusbar.configure( bg = bgcolor )
+            self.sendSerial(message)
         self.master.update()
         return True
 
