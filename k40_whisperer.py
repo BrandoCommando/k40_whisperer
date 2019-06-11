@@ -1750,6 +1750,7 @@ class Application(Frame):
             y_start_mils = 0
 
         try:
+            self.begin_op();
             self.send_egv_data(EGV_data,n_passes)
         except MemoryError as e:
             msg1 = "Memory Error:"
@@ -1773,6 +1774,7 @@ class Application(Frame):
         dxmils = -(x_end_mils - x_start_mils)
         dymils =   y_end_mils - y_start_mils
         self.Send_Rapid_Move(dxmils,dxmils)
+        self.finish_op()
 
         
     def Open_SVG(self,filemname):
@@ -3218,7 +3220,6 @@ class Application(Frame):
     def send_egv_data(self,data,num_passes=1,output_filename=None):
         pre_process_CRC        = self.pre_pr_crc.get()
         if self.k40 != None:
-            self.begin_op()
             self.k40.timeout       = int(self.t_timeout.get())   
             self.k40.n_timeouts    = int(self.n_timeouts.get())
             if DEBUG:
@@ -3226,7 +3227,6 @@ class Application(Frame):
             self.k40.send_data(data,self.update_gui,self.stop,num_passes,pre_process_CRC, wait_for_laser=True)
             if DEBUG:
                 print(("Elapsed Time: %.2f" %(time()-time_start)))
-            self.finish_op()
         else:
             self.statusMessage.set("Laser is not initialized.")
             self.statusbar.configure( bg = 'yellow' )
