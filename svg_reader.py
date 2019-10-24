@@ -185,6 +185,11 @@ class SVG_READER(inkex.Effect):
             self.Cut_Type[path_id]=k40_action
             (r,g,b) = (255,255,255)
             changed=True
+        elif (r == 0 and g == 0 and b == 0):
+            k40_action = "cut"
+            self.Cut_Type[path_id]=k40_action
+            (r,g,b) = (255,255,255)
+            changed=True
         # Check if the color is Blue (or close to it)
         elif (r <= delta) and (g <= delta) and (b >= 255-delta):
             k40_action = "engrave"
