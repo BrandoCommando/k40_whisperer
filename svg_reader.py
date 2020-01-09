@@ -635,6 +635,24 @@ class SVG_READER(inkex.Effect):
 
 
     def Make_PNG(self):
+      try:
+          from cairosvg import svg2png
+          tmp_dir = tempfile.mkdtemp();
+          svg_temp_file = os.path.join(tmp_dir, "k40w_temp.svg")
+          png_temp_file = os.path.join(tmp_dir, "k40w_image.png")
+          self.document.write(svg_temp_file)
+          svg2png(open(svg_temp_file,'rb').read(),write_to=open(png_temp_file,'wb'))
+          self.raster_PIL = Image.open(png_temp_file)
+          self.raster_PIL = self.raster_PIL.convert("L");
+      except Exception as e:
+          self.Make_PNG_ink()
+      try:
+          shutil.rmtree(tmp_dir) 
+      except:
+          raise Exception("Temp dir failed to delete:\n%s" %(tmp_dir) )
+
+
+    def Make_PNG_ink(self):
         #create OS temp folder
         tmp_dir = tempfile.mkdtemp()
         
