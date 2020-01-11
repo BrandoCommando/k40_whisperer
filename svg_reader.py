@@ -672,7 +672,7 @@ class SVG_READER(inkex.Effect):
         return retval
 
 
-    def Make_PNG(self):
+    def Make_PNG_cairo(self):
       try:
           from cairosvg import svg2png
           tmp_dir = tempfile.mkdtemp();
@@ -688,6 +688,10 @@ class SVG_READER(inkex.Effect):
           shutil.rmtree(tmp_dir) 
       except:
           raise Exception("Temp dir failed to delete:\n%s" %(tmp_dir) )
+          
+    
+    def Make_PNG(self):
+        self.Make_PNG_ink()
 
 
     def Make_PNG_ink(self):
