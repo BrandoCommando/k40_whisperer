@@ -292,6 +292,7 @@ class Application(Frame):
         self.n_egv_passes = StringVar()
 
         self.inkscape_path = StringVar()
+        self.temp_dir = StringVar()
         self.execute_before = StringVar()
         self.execute_after = StringVar()
         self.batch_path    = StringVar()
@@ -337,6 +338,7 @@ class Application(Frame):
         self.post_beep.set(0)
         self.post_disp.set(0)
         self.post_exec.set(0)
+        self.temp_dir.set("/tmp")
         
         self.pre_pr_crc.set(1)
         self.inside_first.set(1)
@@ -509,22 +511,22 @@ class Application(Frame):
         self.NormalColor =  self.Entry_Vcut_feed.cget('bg')
 
         # Buttons
-        self.Reng_Button  = Button(self.master,text="Raster Engrave", command=self.Raster_Eng)
-        self.Veng_Button  = Button(self.master,text="Vector Engrave", command=self.Vector_Eng)
-        self.Vcut_Button  = Button(self.master,text="Vector Cut"    , command=self.Vector_Cut)
+        self.Reng_Button  = Button(self.master,text="Raster", command=self.Raster_Eng)
+        self.Veng_Button  = Button(self.master,text="Engrave", command=self.Vector_Eng)
+        self.Vcut_Button  = Button(self.master,text="Cut"    , command=self.Vector_Cut)
         self.Grun_Button  = Button(self.master,text="Run G-Code"    , command=self.Gcode_Cut)
 
 
-        self.Reng_Veng_Button      = Button(self.master,text="Raster and\nVector Engrave", command=self.Raster_Vector_Eng)
-        self.Veng_Vcut_Button      = Button(self.master,text="Vector Engrave\nand Cut", command=self.Vector_Eng_Cut)
-        self.Reng_Veng_Vcut_Button = Button(self.master,text="Raster Engrave\nVector Engrave\nand\nVector Cut", command=self.Raster_Vector_Cut)
+        self.Reng_Veng_Button      = Button(self.master,text="Raster/Engrave", command=self.Raster_Vector_Eng)
+        self.Veng_Vcut_Button      = Button(self.master,text="Engrave/Cut", command=self.Vector_Eng_Cut)
+        self.Reng_Veng_Vcut_Button = Button(self.master,text="Raster/Engrave/Cut", command=self.Raster_Vector_Cut)
         
         self.Label_Position_Control = Label(self.master,text="Position Controls:", anchor=W)
         
         self.Initialize_Button = Button(self.master,text="Initialize Laser Cutter", command=self.Initialize_Laser)
 
-        self.Open_Button       = Button(self.master,text="Open\nDesign File",   command=self.menu_File_Open_Design)
-        self.Reload_Button     = Button(self.master,text="Reload\nDesign File", command=self.menu_Reload_Design)
+        self.Open_Button       = Button(self.master,text="Open File",   command=self.menu_File_Open_Design)
+        self.Reload_Button     = Button(self.master,text="Reload", command=self.menu_Reload_Design)
         
         self.Home_Button       = Button(self.master,text="Home",            command=self.Home)
         self.UnLock_Button     = Button(self.master,text="Unlock Rail",     command=self.Unlock)
@@ -976,6 +978,7 @@ class Application(Frame):
         
         header.append('(k40_whisperer_set designfile    \042%s\042 )' %( self.DESIGN_FILE   ))
         header.append('(k40_whisperer_set inkscape_path \042%s\042 )' %( self.inkscape_path.get() ))
+        header.append('(k40_whisperer_set temp_dir \042%s\042 )' % ( self.temp_dir.get() ))
         header.append('(k40_whisperer_set execute_before #%s# )' %( self.execute_before.get() ))
         header.append('(k40_whisperer_set execute_after #%s# )' %( self.execute_after.get() ))
         header.append('(k40_whisperer_set batch_path    \042%s\042 )' %( self.batch_path.get() ))
@@ -1945,6 +1948,15 @@ class Application(Frame):
         self.Send_Rapid_Move(dxmils,dxmils)
         self.finish_op()
 
+
+    def get_file_prefix(self,filename):
+        import hashlib
+        hash_md5 = hashlib.md5()
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
         
     def Open_SVG(self,filemname):
         self.resetPath()
@@ -1952,6 +1964,7 @@ class Application(Frame):
         self.SVG_FILE = filemname
         svg_reader =  SVG_READER()
         svg_reader.set_inkscape_path(self.inkscape_path.get())
+        svg_reader.set_temp_dir(self.temp_dir.get())
         self.input_dpi = 1000
         svg_reader.image_dpi = self.input_dpi
         svg_reader.timout = int(float( self.ink_timeout.get())*60.0) 
@@ -1960,6 +1973,7 @@ class Application(Frame):
         try:
             try:
                 try:
+                    svg_reader.set_file_prefix(self.get_file_prefix(filemname))
                     svg_reader.parse_svg(self.SVG_FILE)
                     svg_reader.make_paths()
                 except SVG_PXPI_EXCEPTION as e:
@@ -2542,6 +2556,8 @@ class Application(Frame):
                            self.DESIGN_FILE=(line[line.find("designfile"):].split("\042")[1])
                     elif "inkscape_path"    in line:
                          self.inkscape_path.set(line[line.find("inkscape_path"):].split("\042")[1])
+                    elif "temp_dir" in line:
+                         self.temp_dir.set(line[line.find("temp_dir"):].split("\042")[1])
                     elif "execute_before"    in line:
                          self.execute_before.set(line[line.find("execute_before"):].split("#")[1])
                     elif "execute_after"    in line:

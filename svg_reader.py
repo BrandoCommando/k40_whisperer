@@ -137,6 +137,8 @@ class SVG_READER(inkex.Effect):
         self.inkscape_exe_list.append("/Applications/Inkscape.app/Contents/Resources/bin/inkscape")
         self.inkscape_exe_list.append("/Applications/Inkscape.app/Contents/MacOS/Inkscape")
         self.inkscape_exe = None
+        self.temp_dir = None
+        self.file_prefix = None
         self.lines =[]
         self.Cut_Type = {}
         self.Xsize=40
@@ -675,19 +677,38 @@ class SVG_READER(inkex.Effect):
     def Make_PNG_cairo(self):
       try:
           from cairosvg import svg2png
-          tmp_dir = tempfile.mkdtemp();
-          svg_temp_file = os.path.join(tmp_dir, "k40w_temp.svg")
-          png_temp_file = os.path.join(tmp_dir, "k40w_image.png")
+          tmp_dir = self.get_temp_dir()
+          svg_temp_file = os.path.join(tmp_dir, "%s-%s" % (self.file_prefix, "k40w_temp.svg"))
+          png_temp_file = os.path.join(tmp_dir, "%s-%s" % (self.file_prefix, "k40w_image.png"))
           self.document.write(svg_temp_file)
           svg2png(open(svg_temp_file,'rb').read(),write_to=open(png_temp_file,'wb'))
           self.raster_PIL = Image.open(png_temp_file)
           self.raster_PIL = self.raster_PIL.convert("L");
       except Exception as e:
           self.Make_PNG_ink()
-      try:
-          shutil.rmtree(tmp_dir) 
-      except:
-          raise Exception("Temp dir failed to delete:\n%s" %(tmp_dir) )
+      self.clear_temp_dir(tmp_dir)
+
+
+    def get_temp_dir(self):
+      if self.temp_dir == None:
+        return tempfile.mkdtemp()
+      return self.temp_dir
+
+
+    def set_temp_dir(self,tmp_dir):
+      self.temp_dir = tmp_dir
+
+
+    def set_file_prefix(self,value):
+      self.file_prefix = value
+
+
+    def clear_temp_dir(self, tmp_dir):
+      if self.temp_dir == None:
+        try:
+            shutil.rmtree(tmp_dir) 
+        except:
+            raise Exception("Temp dir failed to delete:\n%s" %(tmp_dir) )
           
     
     def Make_PNG(self):
@@ -696,43 +717,41 @@ class SVG_READER(inkex.Effect):
 
     def Make_PNG_ink(self):
         #create OS temp folder
-        tmp_dir = tempfile.mkdtemp()
+        tmp_dir = self.get_temp_dir()
         
         if self.inkscape_exe != None:
-            try:                
-                svg_temp_file = os.path.join(tmp_dir, "k40w_temp.svg")
-                png_temp_file = os.path.join(tmp_dir, "k40w_image.png")
+            try:
+                svg_temp_file = os.path.join(tmp_dir, "k40_temp_%s.svg" % (self.file_prefix))
+                png_temp_file = os.path.join(tmp_dir, "k40w_image_%s.png" % (self.file_prefix))
                 dpi = "%d" %(self.image_dpi)           
-                self.document.write(svg_temp_file)
+                if not os.path.exists(svg_temp_file):
+                    self.document.write(svg_temp_file)
+                if not os.path.exists(png_temp_file):
+                    # Check Version of Inkscape
+                    cmd = [ self.inkscape_exe, "-V"]
+                    (stdout,stderr)=run_external(cmd, self.timout)
+                    if stdout.find(b'Inkscape 1.')==-1:
+                        cmd = [ self.inkscape_exe, self.png_area, "--export-dpi", dpi, \
+                                "--export-background","rgb(255, 255, 255)","--export-background-opacity", \
+                                "255" ,"--export-png", png_temp_file, svg_temp_file ]
+                    else:
+                        cmd = [ self.inkscape_exe, self.png_area, "--export-dpi", dpi, \
+                                "--export-background","rgb(255, 255, 255)","--export-background-opacity", \
+                                "255" ,"--export-type=png", "--export-file", png_temp_file, svg_temp_file ]
 
-                # Check Version of Inkscape
-                cmd = [ self.inkscape_exe, "-V"]
-                (stdout,stderr)=run_external(cmd, self.timout)
-                if stdout.find(b'Inkscape 1.')==-1:
-                    cmd = [ self.inkscape_exe, self.png_area, "--export-dpi", dpi, \
-                            "--export-background","rgb(255, 255, 255)","--export-background-opacity", \
-                            "255" ,"--export-png", png_temp_file, svg_temp_file ]
-                else:
-                    cmd = [ self.inkscape_exe, self.png_area, "--export-dpi", dpi, \
-                            "--export-background","rgb(255, 255, 255)","--export-background-opacity", \
-                            "255" ,"--export-type=png", "--export-file", png_temp_file, svg_temp_file ]
-
-                run_external(cmd, self.timout)
+                    run_external(cmd, self.timout)
                 self.raster_PIL = Image.open(png_temp_file)
                 self.raster_PIL = self.raster_PIL.convert("L")
             except Exception as e:
                 try:
-                    shutil.rmtree(tmp_dir) 
+                    self.clear_temp_dir(tmp_dir)
                 except:
                     pass
                 error_text = "%s" %(e)
                 raise Exception("Inkscape Execution Failed (while making raster data).\n%s" %(error_text))
         else:
             raise Exception("Inkscape Not found.")
-        try:
-            shutil.rmtree(tmp_dir) 
-        except:
-            raise Exception("Temp dir failed to delete:\n%s" %(tmp_dir) )
+        self.clear_temp_dir(tmp_dir)
 
 
 ##    def open_cdr_file(self,filename):
@@ -758,11 +777,11 @@ class SVG_READER(inkex.Effect):
 
     def convert_text2paths(self):
         #create OS temp folder
-        tmp_dir = tempfile.mkdtemp()
+        tmp_dir = self.get_temp_dir()
         if self.inkscape_exe != None:
             try:
-                svg_temp_file = os.path.join(tmp_dir, "k40w_temp.svg")
-                txt2path_file = os.path.join(tmp_dir, "txt2path.svg")         
+                svg_temp_file = os.path.join(tmp_dir, self.file_prefix, "k40w_temp.svg")
+                txt2path_file = os.path.join(tmp_dir, self.file_prefix, "txt2path.svg")
                 self.document.write(svg_temp_file)
                 cmd = [ self.inkscape_exe, "--export-text-to-path","--export-plain-svg",txt2path_file, svg_temp_file ]
                 run_external(cmd, self.timout)
@@ -771,10 +790,7 @@ class SVG_READER(inkex.Effect):
                 raise Exception("Inkscape Execution Failed (while converting text to paths).\n\n"+str(e))
         else:
             raise Exception("Inkscape Not found.")
-        try:
-            shutil.rmtree(tmp_dir) 
-        except:
-            raise Exception("Temp dir failed to delete:\n%s" %(tmp_dir) )
+        self.clear_temp_dir(tmp_dir)
 
 
     def set_size(self,pxpi,viewbox):
