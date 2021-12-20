@@ -292,6 +292,7 @@ class Application(Frame):
         self.n_egv_passes = StringVar()
 
         self.inkscape_path = StringVar()
+        self.execute_before = StringVar()
         self.batch_path    = StringVar()
         self.ink_timeout   = StringVar()
         
@@ -980,6 +981,7 @@ class Application(Frame):
         
         header.append('(k40_whisperer_set designfile    \042%s\042 )' %( self.DESIGN_FILE   ))
         header.append('(k40_whisperer_set inkscape_path \042%s\042 )' %( self.inkscape_path.get() ))
+        header.append('(k40_whisperer_set execute_before #%s# )' %( self.execute_before.get() ))
         header.append('(k40_whisperer_set batch_path    \042%s\042 )' %( self.batch_path.get() ))
 
 
@@ -2591,6 +2593,8 @@ class Application(Frame):
                            self.DESIGN_FILE=(line[line.find("designfile"):].split("\042")[1])
                     elif "inkscape_path"    in line:
                          self.inkscape_path.set(line[line.find("inkscape_path"):].split("\042")[1])
+                    elif "execute_before"    in line:
+                         self.execute_before.set(line[line.find("execute_before"):].split("#")[1])
                     elif "batch_path"    in line:
                          self.batch_path.set(line[line.find("batch_path"):].split("\042")[1])
 
@@ -3030,6 +3034,10 @@ class Application(Frame):
         self.set_gui("disabled")
         self.statusbar.configure( bg = 'green' )
         self.statusMessage.set(msg)
+        if self.execute_before.get()!="":
+            dm=self.statusMessage.get()
+            self.statusMessage.set("Executing before task: %s" % (self.execute_before.get()))
+            os.system("%s %s" % (self.execute_before.get(), self.DESIGN_FILE))
         self.master.update()
 
     def Finish_Job(self, event=None):
@@ -4805,7 +4813,13 @@ class Application(Frame):
         self.Checkbutton_init_home = Checkbutton(gen_settings,text="", anchor=W)
         self.Checkbutton_init_home.place(x=xd_entry_L, y=D_Yloc, width=75, height=23)
         self.Checkbutton_init_home.configure(variable=self.init_home)
-
+        
+        D_Yloc=D_Yloc+D_dY
+        self.Label_Ex_Before = Label(gen_settings,text="Execute before cut")
+        self.Label_Ex_Before.place(x=xd_label_L, y=D_Yloc, width=w_label, height=21)
+        self.Entry_Ex_Before = Entry(gen_settings,width="15")
+        self.Entry_Ex_Before.place(x=xd_entry_L, y=D_Yloc, width=75, height=23)
+        self.Entry_Ex_Before.configure(textvariable=self.execute_before)
         
         D_Yloc=D_Yloc+D_dY
         self.Label_post_home = Label(gen_settings,text="After Job Finishes:")
