@@ -3028,16 +3028,18 @@ class Application(Frame):
             self.statusMessage.set("No g-code data to cut")
         self.Finish_Job()
 
+    def Laser_Start(self):
+        if self.execute_before.get()!="":
+            dm=self.statusMessage.get()
+            self.statusMessage.set("Executing before task: %s" % (self.execute_before.get()))
+            os.system("%s %s" % (self.execute_before.get(), self.DESIGN_FILE))
+        
     def Prepare_for_laser_run(self,msg):
         self.stop[0]=False
         self.move_head_window_temporary([0,0])
         self.set_gui("disabled")
         self.statusbar.configure( bg = 'green' )
         self.statusMessage.set(msg)
-        if self.execute_before.get()!="":
-            dm=self.statusMessage.get()
-            self.statusMessage.set("Executing before task: %s" % (self.execute_before.get()))
-            os.system("%s %s" % (self.execute_before.get(), self.DESIGN_FILE))
         self.master.update()
 
     def Finish_Job(self, event=None):
@@ -3651,7 +3653,7 @@ class Application(Frame):
             self.k40.timeout       = int(float( self.t_timeout.get()  )) 
             self.k40.n_timeouts    = int(float( self.n_timeouts.get() ))
             time_start = time()
-            self.k40.send_data(data,self.update_gui,self.stop,num_passes,pre_process_CRC, wait_for_laser=self.wait.get())
+            self.k40.send_data(data,self.update_gui,self.stop,num_passes,pre_process_CRC, wait_for_laser=self.wait.get(),laser_start=self.Laser_Start)
             self.run_time = time()-time_start
             if DEBUG:
                 print(("Elapsed Time: %.6f" %(time()-time_start)))
